@@ -19,6 +19,9 @@ import com.budiyev.android.codescanner.CodeScannerView
 import com.budiyev.android.codescanner.DecodeCallback
 import com.budiyev.android.codescanner.ErrorCallback
 import com.budiyev.android.codescanner.ScanMode
+import com.foysal.wsTech.scanner.Common.Common
+import com.foysal.wsTech.scanner.Model.APIResponse
+import com.foysal.wsTech.scanner.Remote.IMyApi
 import com.foysal.wsTech.scanner.databinding.ActivityMainBinding
 import java.io.IOException
 import com.google.android.gms.vision.CameraSource
@@ -26,15 +29,20 @@ import com.google.android.gms.vision.Detector
 import com.google.android.gms.vision.barcode.Barcode
 import com.google.android.gms.vision.barcode.BarcodeDetector
 import com.google.android.gms.vision.Detector.Detections
+import retrofit2.Call
+import retrofit2.Response
 import java.util.jar.Manifest
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var codeScanner : CodeScanner
+    private lateinit var mService : IMyApi
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        mService = Common.api
 
         if(ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) ==
             PackageManager.PERMISSION_DENIED){
@@ -57,6 +65,7 @@ class MainActivity : AppCompatActivity() {
 
         codeScanner.decodeCallback = DecodeCallback {
             runOnUiThread{
+                registerBarcode(it.text.toString())
                 Toast.makeText(this, "Scan Result: ${it.text}", Toast.LENGTH_LONG).show()
             }
         }
@@ -68,6 +77,31 @@ class MainActivity : AppCompatActivity() {
         scannerView.setOnClickListener{
             codeScanner.startPreview()
         }
+//        val aniSlide: Animation =
+//            AnimationUtils.loadAnimation(this@MainActivity, R.anim.scanner_animation)
+//        binding.barcodeLine.startAnimation(aniSlide)
+    }
+
+    private fun registerBarcode(barcode: String) {
+
+        mService.registerUser(barcode)
+            .enqueue(object : retrofit2.Callback<APIResponse> {
+                override fun onResponse(call: Call<APIResponse>, response: Response<APIResponse>) {
+                    if (response.body()!!.error)
+                        Toast.makeText(this@MainActivity, response.body()!!.error_msg,
+                            Toast.LENGTH_LONG).show()
+                    else
+                        Toast.makeText(this@MainActivity, "Register Successful"
+                                + response.body()!!.uid, Toast.LENGTH_LONG).show()
+                }
+
+                override fun onFailure(call: Call<APIResponse>, t: Throwable) {
+                    Toast.makeText(this@MainActivity, t.message, Toast.LENGTH_LONG).show()
+                }
+
+
+            })
+
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -84,13 +118,13 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         if (::codeScanner.isInitialized){
-            codeScanner?.startPreview()
+            codeScanner.startPreview()
         }
     }
 
     override fun onPause() {
         if(::codeScanner.isInitialized){
-            codeScanner?.releaseResources()
+            codeScanner.releaseResources()
         }
         super.onPause()
     }
