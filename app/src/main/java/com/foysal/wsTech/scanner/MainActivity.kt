@@ -3,14 +3,14 @@ package com.foysal.wsTech.scanner
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 
-import android.annotation.SuppressLint
 import android.content.pm.PackageManager
-import android.os.PersistableBundle
-import android.view.SurfaceHolder
+import android.view.LayoutInflater
 import android.view.View
-import android.view.animation.Animation
-import android.view.animation.AnimationUtils
+import android.widget.Button
+import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.budiyev.android.codescanner.AutoFocusMode
@@ -22,28 +22,22 @@ import com.budiyev.android.codescanner.ScanMode
 import com.foysal.wsTech.scanner.Common.Common
 import com.foysal.wsTech.scanner.Model.APIResponse
 import com.foysal.wsTech.scanner.Remote.IMyApi
-import com.foysal.wsTech.scanner.databinding.ActivityMainBinding
-import java.io.IOException
-import com.google.android.gms.vision.CameraSource
-import com.google.android.gms.vision.Detector
-import com.google.android.gms.vision.barcode.Barcode
-import com.google.android.gms.vision.barcode.BarcodeDetector
-import com.google.android.gms.vision.Detector.Detections
 import retrofit2.Call
 import retrofit2.Response
-import java.util.jar.Manifest
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var codeScanner : CodeScanner
     private lateinit var mService : IMyApi
+    private lateinit var textTitle : TextView
+    private lateinit var textMsg : TextView
+    private lateinit var button: Button
+    private lateinit var imageView: ImageView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
         mService = Common.api
-
         if(ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) ==
             PackageManager.PERMISSION_DENIED){
             ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.CAMERA), 1)
@@ -90,9 +84,11 @@ class MainActivity : AppCompatActivity() {
                     if (response.body()!!.error)
                         Toast.makeText(this@MainActivity, response.body()!!.error_msg,
                             Toast.LENGTH_LONG).show()
-                    else
+                    else{
+                        showSuccessAlertDialog(response)
                         Toast.makeText(this@MainActivity, "Register Successful"
                                 + response.body()!!.uid, Toast.LENGTH_LONG).show()
+                        }
                 }
 
                 override fun onFailure(call: Call<APIResponse>, t: Throwable) {
@@ -101,6 +97,25 @@ class MainActivity : AppCompatActivity() {
 
 
             })
+
+    }
+
+    private fun showSuccessAlertDialog(response: Response<APIResponse>) {
+        val builder = AlertDialog.Builder(this, R.style.AlertDialogTheme)
+        val view : View = LayoutInflater.from(this@MainActivity).inflate(
+            R.layout.layout_success_dialog, findViewById(R.id.layoutDialogContainer)
+        )
+        builder.setView(view)
+        textTitle = findViewById(R.id.textTitle)
+        textMsg = findViewById(R.id.textMessage)
+        button = findViewById(R.id.buttonAction)
+        imageView = findViewById(R.id.imageIcon)
+
+        textTitle.text = "Success"
+        textMsg.text = "${response.body()!!.uid} has been successfully registered"
+        button.text = "Scan Again"
+        imageView.setImageResource(R.drawable.done)
+        builder.create()
 
     }
 
