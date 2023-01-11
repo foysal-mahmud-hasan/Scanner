@@ -5,7 +5,8 @@ import com.foysal.wsTech.scanner.Remote.IMyApi
 
 object Common {
 
-    val BASE_URL = "http://10.0.2.2/scannerApi/"
+//    val BASE_URL = "http://10.0.2.2/scannerApi/"
+    val BASE_URL = "http://192.168.1.27/scannerApi/"
 
     val api: IMyApi
         get() = RetrofitClient.getClient(BASE_URL).create(IMyApi::class.java)

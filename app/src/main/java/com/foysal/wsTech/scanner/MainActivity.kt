@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 
 import android.content.pm.PackageManager
+import android.graphics.drawable.ColorDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
@@ -11,6 +12,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.budiyev.android.codescanner.AutoFocusMode
@@ -29,10 +31,10 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var codeScanner : CodeScanner
     private lateinit var mService : IMyApi
-    private lateinit var textTitle : TextView
+/*    private lateinit var textTitle : TextView
     private lateinit var textMsg : TextView
     private lateinit var button: Button
-    private lateinit var imageView: ImageView
+    private lateinit var imageView: ImageView*/
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,12 +84,13 @@ class MainActivity : AppCompatActivity() {
             .enqueue(object : retrofit2.Callback<APIResponse> {
                 override fun onResponse(call: Call<APIResponse>, response: Response<APIResponse>) {
                     if (response.body()!!.error)
-                        Toast.makeText(this@MainActivity, response.body()!!.error_msg,
-                            Toast.LENGTH_LONG).show()
+                        showWarningAlertDialog(response)
+//                        Toast.makeText(this@MainActivity, response.body()!!.error_msg,
+//                            Toast.LENGTH_LONG).show()
                     else{
                         showSuccessAlertDialog(response)
-                        Toast.makeText(this@MainActivity, "Register Successful"
-                                + response.body()!!.uid, Toast.LENGTH_LONG).show()
+//                        Toast.makeText(this@MainActivity, "Register Successful"
+//                                + response.body()!!.uid, Toast.LENGTH_LONG).show()
                         }
                 }
 
@@ -100,24 +103,75 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    private fun showSuccessAlertDialog(response: Response<APIResponse>) {
-        val builder = AlertDialog.Builder(this, R.style.AlertDialogTheme)
-        val view : View = LayoutInflater.from(this@MainActivity).inflate(
-            R.layout.layout_success_dialog, findViewById(R.id.layoutDialogContainer)
+    private fun showWarningAlertDialog(response: Response<APIResponse>) {
+        val builder = AlertDialog.Builder(this@MainActivity, R.style.AlertDialogTheme)
+        val view = LayoutInflater.from(this@MainActivity).inflate(
+            R.layout.layout_warning_dialog,
+            findViewById<View>(R.id.layoutDialogContainerWarning) as? ConstraintLayout
         )
         builder.setView(view)
-        textTitle = findViewById(R.id.textTitle)
-        textMsg = findViewById(R.id.textMessage)
-        button = findViewById(R.id.buttonAction)
-        imageView = findViewById(R.id.imageIcon)
-
-        textTitle.text = "Success"
-        textMsg.text = "${response.body()!!.uid} has been successfully registered"
-        button.text = "Scan Again"
-        imageView.setImageResource(R.drawable.done)
-        builder.create()
-
+        (view.findViewById<View>(R.id.textTitleWarning) as TextView).text = "Warning"
+        (view.findViewById<View>(R.id.textMessageWarning) as TextView).text = "This Qr Code Already Registered For ${response.body()!!.uid} + ${response.body()!!.error_msg}"
+        (view.findViewById<View>(R.id.buttonActionWarning) as Button).text = "Scan Again"
+        (view.findViewById<View>(R.id.imageIconWarning) as ImageView).setImageResource(R.drawable.warning)
+        val alertDialog = builder.create()
+        view.findViewById<View>(R.id.buttonActionWarning).setOnClickListener {
+            codeScanner.startPreview()
+//            Toast.makeText(this@MainActivity, "Success", Toast.LENGTH_LONG).show()
+        }
+        if (alertDialog.window != null) {
+            alertDialog.window!!.setBackgroundDrawable(ColorDrawable(0x0))
+        }
+        alertDialog.show()
     }
+
+    private fun showSuccessAlertDialog(response: Response<APIResponse>) {
+        val builder = AlertDialog.Builder(this@MainActivity, R.style.AlertDialogTheme)
+        val view = LayoutInflater.from(this@MainActivity).inflate(
+            R.layout.layout_success_dialog,
+            findViewById<View>(R.id.layoutDialogContainerSuccess) as? ConstraintLayout
+        )
+        builder.setView(view)
+        (view.findViewById<View>(R.id.textTitleSuccess) as TextView).text = "Success"
+        (view.findViewById<View>(R.id.textMessageSuccess) as TextView).text = "This Qr Code Successfully Registered For ${response.body()!!.uid}"
+        (view.findViewById<View>(R.id.buttonActionSuccess) as Button).text = "Scan Again"
+        (view.findViewById<View>(R.id.imageIconSuccess) as ImageView).setImageResource(R.drawable.done)
+        val alertDialog = builder.create()
+        view.findViewById<View>(R.id.buttonActionSuccess).setOnClickListener {
+            codeScanner.startPreview()
+//            Toast.makeText(this@MainActivity, "Success", Toast.LENGTH_LONG).show()
+        }
+        if (alertDialog.window != null) {
+            alertDialog.window!!.setBackgroundDrawable(ColorDrawable(0x0))
+        }
+        alertDialog.show()
+    }
+
+
+
+/*    java code
+    private void showSuccessDialog()
+    {
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(
+            MainActivity.this,
+            R.style.AlertDialogTheme
+        );
+        View view = LayoutInflater . from (MainActivity.this).inflate(
+            R.layout.layout_success_dialog,
+            (ConstraintLayout) findViewById (R.id.layoutDialogContainerSuccess)
+        );
+        builder.setView(view);
+        ((TextView)) view . findViewById (R.id.textTitleSuccess).setText("SDFS");
+        ((TextView)) view . findViewById (R.id.textMessageSuccess).setText("SDFS");
+        ((Button)) view . findViewById (R.id.buttonActionSuccess).setText("SDFS");
+        ((ImageView)) view . findViewById (R.id.imageIconSuccess).setImageResource(R.drawable.done);
+
+        final AlertDialog = builder . create ();
+
+        alertDialog.show();
+
+    }*/
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
