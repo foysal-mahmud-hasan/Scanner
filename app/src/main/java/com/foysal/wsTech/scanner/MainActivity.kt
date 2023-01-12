@@ -95,12 +95,36 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 override fun onFailure(call: Call<APIResponse>, t: Throwable) {
-                    Toast.makeText(this@MainActivity, t.message, Toast.LENGTH_LONG).show()
+                    showErrorAlertDialog(call, t)
+//                    Toast.makeText(this@MainActivity, t.message, Toast.LENGTH_LONG).show()
                 }
 
 
             })
 
+    }
+
+    private fun showErrorAlertDialog(call: Call<APIResponse>, t: Throwable) {
+        val builder = AlertDialog.Builder(this@MainActivity, R.style.AlertDialogTheme)
+        val view = LayoutInflater.from(this@MainActivity).inflate(
+            R.layout.layout_error_dialog,
+            findViewById<View>(R.id.layoutDialogContainerError) as? ConstraintLayout
+        )
+        builder.setView(view)
+        (view.findViewById<View>(R.id.textTitleError) as TextView).text = "Error"
+        (view.findViewById<View>(R.id.textMessageError) as TextView).text = "${t.message}"
+        (view.findViewById<View>(R.id.buttonActionError) as Button).text = "Scan Again"
+        (view.findViewById<View>(R.id.imageIconError) as ImageView).setImageResource(R.drawable.error)
+        val alertDialog = builder.create()
+        view.findViewById<View>(R.id.buttonActionError).setOnClickListener {
+            codeScanner.startPreview()
+            alertDialog.dismiss()
+//            Toast.makeText(this@MainActivity, "Success", Toast.LENGTH_LONG).show()
+        }
+        if (alertDialog.window != null) {
+            alertDialog.window!!.setBackgroundDrawable(ColorDrawable(0x0))
+        }
+        alertDialog.show()
     }
 
     private fun showWarningAlertDialog(response: Response<APIResponse>) {
@@ -111,12 +135,13 @@ class MainActivity : AppCompatActivity() {
         )
         builder.setView(view)
         (view.findViewById<View>(R.id.textTitleWarning) as TextView).text = "Warning"
-        (view.findViewById<View>(R.id.textMessageWarning) as TextView).text = "This Qr Code Already Registered For ${response.body()!!.uid} + ${response.body()!!.error_msg}"
+        (view.findViewById<View>(R.id.textMessageWarning) as TextView).text = "This Qr Code Already Registered For ${response.body()!!.error_msg}"
         (view.findViewById<View>(R.id.buttonActionWarning) as Button).text = "Scan Again"
         (view.findViewById<View>(R.id.imageIconWarning) as ImageView).setImageResource(R.drawable.warning)
         val alertDialog = builder.create()
         view.findViewById<View>(R.id.buttonActionWarning).setOnClickListener {
             codeScanner.startPreview()
+            alertDialog.dismiss()
 //            Toast.makeText(this@MainActivity, "Success", Toast.LENGTH_LONG).show()
         }
         if (alertDialog.window != null) {
@@ -139,6 +164,7 @@ class MainActivity : AppCompatActivity() {
         val alertDialog = builder.create()
         view.findViewById<View>(R.id.buttonActionSuccess).setOnClickListener {
             codeScanner.startPreview()
+            alertDialog.dismiss()
 //            Toast.makeText(this@MainActivity, "Success", Toast.LENGTH_LONG).show()
         }
         if (alertDialog.window != null) {
